@@ -25,8 +25,8 @@ export class App extends Component {
   componentDidUpdate(prevprops, prevstate) {
     const { searchValue, page } = this.state;
     if (prevstate.searchValue === searchValue && prevstate.page !== page) {
-      this.setState({ loading: true });
-      this.setState({ isDisabled: true });
+      this.setState({ loading: true, isDisabled: true });
+
       fetchItems(searchValue, page)
         .then(response => {
           if (response.ok) {
@@ -36,24 +36,25 @@ export class App extends Component {
         .then(images => {
           if (images.hits.length === 0) {
             this.setState({ isFull: true });
-            toast.error(`There are no images by "${searchValue}" request `);
+            toast.info('No more images found :(');
           }
-          const { id, webFormatURL, largeImageURL, tags } = images.hits;
           this.setState({
-            gallery: images.hits,
+            loading: true,
+            gallery: [...this.state.gallery, ...images.hits],
           });
         })
-        .finally(
-          () => this.setState({ loading: false }),
-          this.setState(prevstate => ({ page: prevstate.page + 1 })),
-          this.setState({ isDisabled: false, isFull: false })
-        );
+
+        .finally(() => {
+          this.setState({ loading: false, isDisabled: false });
+        });
     }
   }
   onHandleSubmit = inputValue => {
-    const { searchValue, page, gallery } = this.state;
-
-    fetchItems(searchValue, page)
+    const { searchValue } = this.state;
+    if (inputValue === searchValue) {
+      return toast.warn('You have just searched images by this request');
+    }
+    fetchItems(inputValue, this.state.page)
       .then(response => {
         if (response.ok) {
           return response.json();
@@ -62,16 +63,18 @@ export class App extends Component {
       .then(images => {
         if (images.hits.length === 0) {
           this.setState({ isFull: true });
-          toast.info('No more images found :(');
+          toast.error(`There are no images by "${inputValue}" request `);
         }
+        const { id, webFormatURL, largeImageURL, tags } = images.hits;
         this.setState({
-          // loading: true,
-          gallery: [...gallery, ...images.hits],
+          gallery: images.hits,
         });
-      });
-    if (inputValue === searchValue) {
-      return toast.warn('You have just searched images by this request');
-    }
+      })
+      .finally(
+        () => this.setState({ loading: false }),
+        this.setState(prevstate => ({ page: prevstate.page + 1 })),
+        this.setState({ isDisabled: false, isFull: false })
+      );
     this.setState({ searchValue: inputValue, page: 1, gallery: [] });
   };
   toggleModal = (modalImage = '', imageAlt = '') => {
@@ -84,32 +87,9 @@ export class App extends Component {
   onLoadMore = () => {
     const { searchValue, page, gallery } = this.state;
 
-    this.setState({ loading: true, isDisabled: true });
-
-    // fetchItems(searchValue, page)
-    //   .then(response => {
-    //     if (response.ok) {
-    //       return response.json();
-    //     }
-    //   })
-    //   .then(images => {
-    //     if (images.hits.length === 0) {
-    //       this.setState({ isFull: true });
-    //       toast.info('No more images found :(');
-    //     }
-    //     this.setState({
-    //       loading: true,
-    //       gallery: [...gallery, ...images.hits],
-    //     });
-    //   })
-
-    // .finally(() => {
-    this.setState({ loading: false, isDisabled: false });
-
     this.setState(prevstate => ({
       page: prevstate.page + 1,
     }));
-    // });
   };
   render() {
     const {
