@@ -6,7 +6,7 @@ import { LoadMoreButton } from './Button/LoadMoreButton';
 import { Loader } from './Loader/Loader';
 import { toast } from 'react-toastify';
 
-import fetchItems from './services/api';
+import fetchItems from '../services/api';
 import css from './Modal/Modal.module.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -24,7 +24,7 @@ export class App extends Component {
   };
   componentDidUpdate(prevprops, prevstate) {
     const { searchValue, page } = this.state;
-    if (prevstate.searchValue !== searchValue) {
+    if (prevstate.searchValue === searchValue && prevstate.page !== page) {
       this.setState({ loading: true });
       this.setState({ isDisabled: true });
       fetchItems(searchValue, page)
@@ -38,7 +38,10 @@ export class App extends Component {
             this.setState({ isFull: true });
             toast.error(`There are no images by "${searchValue}" request `);
           }
-          this.setState({ gallery: images.hits });
+          const { id, webFormatURL, largeImageURL, tags } = images.hits;
+          this.setState({
+            gallery: images.hits,
+          });
         })
         .finally(
           () => this.setState({ loading: false }),
@@ -48,7 +51,24 @@ export class App extends Component {
     }
   }
   onHandleSubmit = inputValue => {
-    const { searchValue } = this.state;
+    const { searchValue, page, gallery } = this.state;
+
+    fetchItems(searchValue, page)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+      })
+      .then(images => {
+        if (images.hits.length === 0) {
+          this.setState({ isFull: true });
+          toast.info('No more images found :(');
+        }
+        this.setState({
+          // loading: true,
+          gallery: [...gallery, ...images.hits],
+        });
+      });
     if (inputValue === searchValue) {
       return toast.warn('You have just searched images by this request');
     }
@@ -66,30 +86,30 @@ export class App extends Component {
 
     this.setState({ loading: true, isDisabled: true });
 
-    fetchItems(searchValue, page)
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        }
-      })
-      .then(images => {
-        if (images.hits.length === 0) {
-          this.setState({ isFull: true });
-          toast.info('No more images found :(');
-        }
-        this.setState({
-          loading: true,
-          gallery: [...gallery, ...images.hits],
-        });
-      })
+    // fetchItems(searchValue, page)
+    //   .then(response => {
+    //     if (response.ok) {
+    //       return response.json();
+    //     }
+    //   })
+    //   .then(images => {
+    //     if (images.hits.length === 0) {
+    //       this.setState({ isFull: true });
+    //       toast.info('No more images found :(');
+    //     }
+    //     this.setState({
+    //       loading: true,
+    //       gallery: [...gallery, ...images.hits],
+    //     });
+    //   })
 
-      .finally(() => {
-        this.setState({ loading: false, isDisabled: false });
+    // .finally(() => {
+    this.setState({ loading: false, isDisabled: false });
 
-        this.setState(prevstate => ({
-          page: prevstate.page + 1,
-        }));
-      });
+    this.setState(prevstate => ({
+      page: prevstate.page + 1,
+    }));
+    // });
   };
   render() {
     const {
