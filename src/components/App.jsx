@@ -84,8 +84,6 @@ export class App extends Component {
     }));
   };
   onLoadMore = () => {
-    const { searchValue, page, gallery } = this.state;
-
     this.setState(prevstate => ({
       page: prevstate.page + 1,
     }));
