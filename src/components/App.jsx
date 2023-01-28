@@ -65,7 +65,6 @@ export class App extends Component {
           this.setState({ isFull: true });
           toast.error(`There are no images by "${inputValue}" request `);
         }
-        const { id, webFormatURL, largeImageURL, tags } = images.hits;
         this.setState({
           gallery: images.hits,
         });
