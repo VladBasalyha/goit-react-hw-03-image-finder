@@ -50,11 +50,11 @@ export class App extends Component {
     }
   }
   onHandleSubmit = inputValue => {
-    const { searchValue } = this.state;
+    const { searchValue, page } = this.state;
     if (inputValue === searchValue) {
       return toast.warn('You have just searched images by this request');
     }
-    fetchItems(inputValue, this.state.page)
+    fetchItems(inputValue, page)
       .then(response => {
         if (response.ok) {
           return response.json();
